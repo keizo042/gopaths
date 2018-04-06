@@ -27,31 +27,35 @@ var (
 	initFlags   = []cli.Flag{}
 	commands    = []cli.Command{
 		{
+			Name:   "init",
+			Action: ActionInit,
+			Usage:  "manage bash config",
+		},
+		{
 			Name:   "config",
 			Action: ActionConfig,
 		},
 		{
 			Name:   "enable",
 			Action: ActionEnable,
+			Usage:  "enable gopaths's GOPATH",
 		},
 		{
 			Name:   "disable",
 			Action: ActionDisable,
+			Usage:  "dsiable gopaths's GOPATH",
 		},
 		{
-			Name: "update",
+			Name:   "add",
+			Action: ActionAdd,
 		},
 		{
-			Name: "init",
+			Name:   "remove",
+			Action: ActionRemove,
 		},
 		{
-			Name: "add",
-		},
-		{
-			Name: "remove",
-		},
-		{
-			Name: "complete",
+			Name:   "complete",
+			Action: ActionComplete,
 		},
 	}
 )
@@ -72,43 +76,71 @@ func NewConfig(ctx *cli.Context) (*gopaths.Config, error) {
 	return cfg, nil
 }
 
-func ActionConfig(ctx *cli.Context) error {
+func newApp(ctx *cli.Context) (*gopaths.App, error) {
 	cfg, err := NewConfig(ctx)
 	if err != nil {
-		return errors.Wrap(err, "config")
+		return nil, errors.Wrap(err, "config")
 	}
 	app, err := gopaths.NewApp(cfg)
 	if err != nil {
-		return errors.Wrap(err, "app")
+		return nil, errors.Wrap(err, "app")
 	}
-	return errors.Wrap(app.Config(), "runtime")
+	return app, nil
+}
+
+func ActionInit(ctx *cli.Context) error {
+	app, err := newApp(ctx)
+	if err != nil {
+		return err
+	}
+	return app.Init()
+}
+func ActionConfig(ctx *cli.Context) error {
+	app, errr := newApp(ctx)
+	if err != nil {
+		return err
+	}
+	return app.Config()
 }
 
 func ActionEnable(ctx *cli.Context) error {
-	cfg, err := NewConfig(ctx)
+	app, err := newApp(ctx)
 	if err != nil {
-		return errors.Wrap(err, "config")
+		return err
 	}
-	app, err := gopaths.NewApp(cfg)
-	if err != nil {
-		return errors.Wrap(err, "app")
-	}
-	return errors.Wrap(app.Config(), "runtime")
+	return app.Enable()
 }
 
 func ActionDisable(ctx *cli.Context) error {
-}
-
-func ActionUpdate(ctx *cli.Context) error {
+	app, err := newApp(ctx)
+	if err != nil {
+		return err
+	}
+	return app.Disable()
 }
 
 func ActionAdd(ctx *cli.Context) error {
+	app, err := newApp(ctx)
+	if err != nil {
+		return err
+	}
+	return app.Add()
 }
 
 func ActionRemove(ctx *cli.Context) error {
+	app, err := newApp(ctx)
+	if err != nil {
+		return err
+	}
+	return app.Remove()
 }
 
 func ActionComplete(ctx *cli.Context) error {
+	app, err := NewConfig(ctx)
+	if err != nil {
+		return err
+	}
+	return app.Complete()
 }
 
 func main() {

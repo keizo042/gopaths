@@ -24,3 +24,35 @@ func getInfo(fpath string) (*RepoInfo, error) {
 	}
 	return &rinfo, nil
 }
+
+func NewApp(c *Config) (*App, error) {
+	return &App{}, nil
+}
+
+func (app *App) Init() error {
+	return errors.New("TBD")
+}
+
+func (app *App) Config() error {
+	return errors.New("TBD")
+}
+
+func (app *App) Enable() error {
+	return errors.New("TBD")
+}
+
+func (app *App) Disable() error {
+	return errors.New("TBD")
+}
+
+func (app *App) Add() error {
+	return errors.New("TBD")
+}
+
+func (app *App) Remove() error {
+	return errors.New("TBD")
+}
+
+func (app *App) Complete() error {
+	return errors.New("TBD")
+}
