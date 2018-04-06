@@ -96,7 +96,7 @@ func ActionInit(ctx *cli.Context) error {
 	return app.Init()
 }
 func ActionConfig(ctx *cli.Context) error {
-	app, errr := newApp(ctx)
+	app, err := newApp(ctx)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func ActionRemove(ctx *cli.Context) error {
 }
 
 func ActionComplete(ctx *cli.Context) error {
-	app, err := NewConfig(ctx)
+	app, err := newApp(ctx)
 	if err != nil {
 		return err
 	}
