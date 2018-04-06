@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	defaultConfigPath = "./.config/gopaths/gopaths.toml"
+	defaultConfigPath = "./.config/gopaths/config.toml"
+	defaultReposPath  = "./.config/gopaths/repos.toml"
 )
 
 type (
@@ -34,6 +35,7 @@ var (
 		{
 			Name:   "config",
 			Action: ActionConfig,
+			Usage:  "configuration",
 		},
 		{
 			Name:   "enable",
@@ -48,14 +50,17 @@ var (
 		{
 			Name:   "add",
 			Action: ActionAdd,
+			Usage:  "add repo that be maintained by gopaths",
 		},
 		{
 			Name:   "remove",
 			Action: ActionRemove,
+			Usage:  "remove repo that be maintained by gopaths",
 		},
 		{
 			Name:   "complete",
 			Action: ActionComplete,
+			Usage:  "bash completion command",
 		},
 	}
 )
@@ -64,8 +69,9 @@ func NewCli() *Cli {
 	app := cli.NewApp()
 	app.Name = gopaths.APP_NAME
 	app.Version = gopaths.APP_VERSION_TEXT
+	app.Commands = commands
+	app.Flags = globalFlags
 	app.Usage = "mutiple gopath manager"
-
 	return &Cli{
 		App: app}
 
