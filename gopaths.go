@@ -1,15 +1,22 @@
 package gopaths
 
 import (
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
+	"os"
+	"strings"
 )
 
 type (
 	App struct {
+		GOPath string
+		Info   *RepoInfo
 	}
 
 	Config struct {
+		configPath string
+		reposPath  string
 	}
 
 	RepoInfo struct {
@@ -26,15 +33,23 @@ func getInfo(fpath string) (*RepoInfo, error) {
 }
 
 func NewApp(c *Config) (*App, error) {
-	return &App{}, nil
+	inf, err := getInfo(c.reposPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "repos info")
+	}
+	return &App{
+		GOPath: os.Getenv("GOPATH"),
+		Info:   inf,
+	}, nil
 }
 
 func (app *App) Init() error {
-	return errors.New("TBD")
+	path := strings.Join(app.Info.Repos, ":")
+	return fmt.Printf("export GOPATH=$GOPATH:%s", path)
 }
 
 func (app *App) Config() error {
-	return errors.New("TBD")
+	return nil
 }
 
 func (app *App) Enable() error {
