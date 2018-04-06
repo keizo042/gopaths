@@ -12,14 +12,15 @@ type (
 	Config struct {
 	}
 
-	PathInfo struct {
+	RepoInfo struct {
+		Repos []string
 	}
 )
 
-func getInfo(fpath string) (*PathInfo, error) {
-	var pinfo PathInfo
-	if _, err := toml.DecodeFile(fpath, &pinfo); err != nil {
+func getInfo(fpath string) (*RepoInfo, error) {
+	var rinfo RepoInfo
+	if _, err := toml.DecodeFile(fpath, &rinfo); err != nil {
 		return nil, errors.Wrap(err, "toml")
 	}
-	return &pinfo, nil
+	return &rinfo, nil
 }

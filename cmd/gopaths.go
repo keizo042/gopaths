@@ -7,7 +7,12 @@ import (
 	"os"
 
 	"github.com/keizo042/gopaths"
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
+)
+
+const (
+	defaultConfigPath = "./.config/gopaths/gopaths.toml"
 )
 
 type (
@@ -17,8 +22,10 @@ type (
 )
 
 var (
-	flags    = []cli.Flag{}
-	commands = []cli.Command{
+	globalFlags = []cli.Flag{}
+	configFlags = []cli.Flag{}
+	initFlags   = []cli.Flag{}
+	commands    = []cli.Command{
 		{
 			Name:   "config",
 			Action: ActionConfig,
@@ -38,36 +45,55 @@ var (
 			Name: "init",
 		},
 		{
-			Name: "delete",
+			Name: "add",
 		},
 		{
-			Name: "bash-completation",
+			Name: "remove",
+		},
+		{
+			Name: "complete",
 		},
 	}
 )
 
 func NewCli() *Cli {
 	app := cli.NewApp()
+	app.Name = gopaths.APP_NAME
+	app.Version = gopaths.APP_VERSION_TEXT
+	app.Usage = "mutiple gopath manager"
 
-	return &Cli
-App:
-	app{}
+	return &Cli{
+		App: app}
 
 }
 
 func NewConfig(ctx *cli.Context) (*gopaths.Config, error) {
-}
-func main() {
-	c := NewCli()
-	if err := c.Run(os.Args); err != nil {
-		fmt.Printf("%s: %s", gopaths.APP_NAME, err.Error())
-	}
+	cfg := &gopaths.Config{}
+	return cfg, nil
 }
 
 func ActionConfig(ctx *cli.Context) error {
+	cfg, err := NewConfig(ctx)
+	if err != nil {
+		return errors.Wrap(err, "config")
+	}
+	app, err := gopaths.NewApp(cfg)
+	if err != nil {
+		return errors.Wrap(err, "app")
+	}
+	return errors.Wrap(app.Config(), "runtime")
 }
 
 func ActionEnable(ctx *cli.Context) error {
+	cfg, err := NewConfig(ctx)
+	if err != nil {
+		return errors.Wrap(err, "config")
+	}
+	app, err := gopaths.NewApp(cfg)
+	if err != nil {
+		return errors.Wrap(err, "app")
+	}
+	return errors.Wrap(app.Config(), "runtime")
 }
 
 func ActionDisable(ctx *cli.Context) error {
@@ -76,11 +102,18 @@ func ActionDisable(ctx *cli.Context) error {
 func ActionUpdate(ctx *cli.Context) error {
 }
 
-func ActionInit(ctx *cli.Context) error {
+func ActionAdd(ctx *cli.Context) error {
 }
 
-func ActionDelete(ctx *cli.Context) error {
+func ActionRemove(ctx *cli.Context) error {
 }
 
-func ActionBashCompletation(ctx *cli.Context) error {
+func ActionComplete(ctx *cli.Context) error {
+}
+
+func main() {
+	c := NewCli()
+	if err := c.Run(os.Args); err != nil {
+		fmt.Printf("%s: %s", gopaths.APP_NAME, err.Error())
+	}
 }
