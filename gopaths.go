@@ -14,6 +14,10 @@ var (
 )
 
 type (
+	Config struct {
+		SettingPath string
+	}
+
 	App struct {
 		GOPATH    string
 		ReposPath string
@@ -38,10 +42,6 @@ type (
 	}
 
 	AppDisableConfig struct {
-	}
-
-	Config struct {
-		reposPath string
 	}
 
 	RepoInfo struct {
@@ -70,7 +70,7 @@ func setInfo(fpath string, rinfo *RepoInfo) error {
 }
 
 func NewApp(c *Config) (*App, error) {
-	inf, err := getInfo(c.reposPath)
+	inf, err := getInfo(c.SettingPath + "gopaths.toml")
 	if err != nil {
 		return nil, errors.Wrap(err, "repos info")
 	}
@@ -78,6 +78,15 @@ func NewApp(c *Config) (*App, error) {
 		GOPATH: os.Getenv("GOPATH"),
 		Info:   inf,
 	}, nil
+}
+
+func (app *App) checkGopathsConfig() error {
+	if _, err := os.Stat(app.ReposPath); err != nil {
+		if err := os.MkdirAll(app.ReposPath, 0666); err != nil {
+			return err
+		}
+	}
+	return ERR_NOTIMPL
 }
 
 // Init is `gopaths init`.
@@ -94,25 +103,26 @@ func (app *App) Init() error {
 }
 
 // Config is `gopaths config`
-// for config gopaths configuration.
-func (app *App) Config() error {
+// for manage gopaths config.
+func (app *App) Config(config AppConfigConfig) error {
 	return ERR_NOTIMPL
 }
 
 // Enable is `gopaths enable`.
-//
+// for enable gopaths we set.
 func (app *App) Enable() error {
 	paths := strings.Join(app.Info.Repos, ":")
 	return os.Setenv("GOPATH", app.Info.GOPATH+":"+paths)
 }
 
 // Disable is `gopaths disable`.
+// for disable gopaths we set and recover original gopath.
 func (app *App) Disable(config AppDisableConfig) error {
 	return os.Setenv("GOPATH", app.Info.GOPATH)
 }
 
 // Add is `gopaths add`.
-//
+// for adding path to gopaths manage.
 func (app *App) Add(config AppAddConfig) error {
 	rinfo, err := getInfo(app.ReposPath)
 	if err != nil {
@@ -123,7 +133,7 @@ func (app *App) Add(config AppAddConfig) error {
 }
 
 // Remove is `gopaths remove`
-//
+// for removing path to gopaths manage.
 func (app *App) Remove(config AppRemoveConfig) error {
 	var repos []string
 	for _, path := range app.Info.Repos {
@@ -135,12 +145,14 @@ func (app *App) Remove(config AppRemoveConfig) error {
 }
 
 // Complete is `gopaths complete`.
-//
+// for generating bash completion
 func (app *App) Complete() error {
 	return ERR_NOTIMPL
 }
 
 // Clean is `gopaths clean`.
+// clean up parameter `gopaths` settings.
+// mainly use, enviroment variables.
 func (app *App) Clean() error {
 	return ERR_NOTIMPL
 }
