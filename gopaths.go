@@ -104,7 +104,7 @@ func (app *App) Init() error {
 
 // Config is `gopaths config`
 // for manage gopaths config.
-func (app *App) Config(config AppConfigConfig) error {
+func (app *App) Config(config *AppConfigConfig) error {
 	return ERR_NOTIMPL
 }
 
@@ -117,7 +117,7 @@ func (app *App) Enable() error {
 
 // Disable is `gopaths disable`.
 // for disable gopaths we set and recover original gopath.
-func (app *App) Disable(config AppDisableConfig) error {
+func (app *App) Disable(config *AppDisableConfig) error {
 	return os.Setenv("GOPATH", app.Info.GOPATH)
 }
 
