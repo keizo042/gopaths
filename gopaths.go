@@ -5,6 +5,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -27,23 +28,31 @@ type (
 	}
 
 	AppInitConfig struct {
+		Verbose bool
+		File    string
 	}
 
 	AppConfigConfig struct {
+		GOPATH  string
+		Verbose bool
 	}
 
 	AppAddConfig struct {
-		Path string
+		Paths   []string
+		Verbose bool
 	}
 
 	AppRemoveConfig struct {
-		Path string
+		Paths   []string
+		Verbose bool
 	}
 
 	AppEnableConfig struct {
+		Verbose bool
 	}
 
 	AppDisableConfig struct {
+		Verbose bool
 	}
 
 	RepoInfo struct {
@@ -63,7 +72,7 @@ func getInfo(fpath string) (*RepoInfo, error) {
 }
 
 func setInfo(fpath string, rinfo *RepoInfo) error {
-	f, err := os.Open(fpath)
+	f, err := os.OpenFile(fpath, os.O_WRONLY, 0777)
 	if err != nil {
 		return err
 	}
@@ -90,32 +99,50 @@ func checkGopathsConfig(fpath string) error {
 	if _, err := os.Stat(fpath); err != nil {
 		if err := os.MkdirAll(fpath, 0777); err != nil {
 			return err
-		}
-	}
-	gopaths_file := fpath + GOPATHS_GOPATHS_FILE
-	if _, err := os.Stat(gopaths_file); err != nil {
-		if _, err := os.Create(gopaths_file); err != nil {
-			return err
-		}
-	}
-	config_file := fpath + GOPATHS_CONFIG_FILE
-	if _, err := os.Stat(config_file); err != nil {
-		if _, err := os.Create(fpath + GOPATHS_CONFIG_FILE); err != nil {
-			return err
-		}
-	}
 
-	return ERR_NOTIMPL
+		}
+	}
+	fileGOPATH := fpath + GOPATHS_GOPATHS_FILE
+	if _, err := os.Stat(fileGOPATH); err != nil {
+		if _, err := os.Create(fileGOPATH); err != nil {
+			return err
+		}
+	}
+	fileConfig := fpath + GOPATHS_CONFIG_FILE
+	if _, err := os.Stat(fileConfig); err != nil {
+		if _, err := os.Create(fileConfig); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (app *App) BuildGOPATH() (string, error) {
+	var GOPATH string
+	if len(app.Info.Repos) == 0 {
+		GOPATH = app.GOPATH
+	} else {
+		path := strings.Join(app.Info.Repos, ":")
+		if err := os.Setenv(GOPATHS_ENV_ORIGINAL_GOPATH, path); err != nil {
+			return "", err
+		}
+		if app.GOPATH == "" {
+			GOPATH = path
+		} else {
+			GOPATH = fmt.Sprintf("%s:%s", app.GOPATH, path)
+		}
+	}
+	return GOPATH, nil
 }
 
 // Init is `gopaths init`.
 // for initalizing GOPATH which gopaths maintain.
 func (app *App) Init() error {
-	path := strings.Join(app.Info.Repos, ":")
-	if err := os.Setenv(GOPATHS_ENV_ORIGINAL_GOPATH, path); err != nil {
+	gopath, err := app.BuildGOPATH()
+	if err != nil {
 		return err
 	}
-	if _, err := fmt.Printf("export GOPATH=$GOPATH:%s", path); err != nil {
+	if _, err := fmt.Printf("export GOPATH=%s", gopath); err != nil {
 		return err
 	}
 	return nil
@@ -130,8 +157,11 @@ func (app *App) Config(config *AppConfigConfig) error {
 // Enable is `gopaths enable`.
 // for enable gopaths we set.
 func (app *App) Enable() error {
-	paths := strings.Join(app.Info.Repos, ":")
-	return os.Setenv("GOPATH", app.Info.GOPATH+":"+paths)
+	gopath, err := app.BuildGOPATH()
+	if err != nil {
+		return err
+	}
+	return os.Setenv("GOPATH", gopath)
 }
 
 // Disable is `gopaths disable`.
@@ -142,24 +172,43 @@ func (app *App) Disable(config *AppDisableConfig) error {
 
 // Add is `gopaths add`.
 // for adding path to gopaths manage.
-func (app *App) Add(config AppAddConfig) error {
-	rinfo, err := getInfo(app.ReposPath)
+func (app *App) Add(config *AppAddConfig) error {
+	fileGOPATHS := app.ReposPath + GOPATHS_GOPATHS_FILE
+	rinfo, err := getInfo(fileGOPATHS)
 	if err != nil {
 		return err
 	}
-	rinfo.Repos = append(rinfo.Repos, config.Path)
-	return setInfo(app.ReposPath, rinfo)
+	var repos []string
+	for _, path := range config.Paths {
+		pathAbs, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+		repos = append(repos, pathAbs)
+	}
+	rinfo.Repos = append(rinfo.Repos, config.Paths...)
+	return setInfo(fileGOPATHS, rinfo)
+}
+
+func isElem(dist string, paths []string) bool {
+	for _, p := range paths {
+		if strings.Compare(dist, p) == 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // Remove is `gopaths remove`
 // for removing path to gopaths manage.
-func (app *App) Remove(config AppRemoveConfig) error {
+func (app *App) Remove(config *AppRemoveConfig) error {
 	var repos []string
-	for _, path := range app.Info.Repos {
-		if strings.Compare(path, config.Path) != 0 {
-			repos = append(repos, path)
+	for _, r := range app.Info.Repos {
+		if !isElem(r, config.Paths) {
+			repos = append(repos, r)
 		}
 	}
+	app.Info.Repos = repos
 	return setInfo(app.ReposPath, app.Info)
 }
 
