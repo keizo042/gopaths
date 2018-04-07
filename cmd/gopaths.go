@@ -24,8 +24,6 @@ type (
 
 var (
 	globalFlags = []cli.Flag{}
-	configFlags = []cli.Flag{}
-	initFlags   = []cli.Flag{}
 	commands    = []cli.Command{
 		{
 			Name:   "init",
