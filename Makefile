@@ -5,7 +5,7 @@ GO=go
 all: build 
 
 build:
-	${GO} build ./cmd/gopaths/ -o /cmd/gopaths/gopaths
+	${GO} build ./cmd/gopaths 
 
 test:
 	${GO} test ./...
