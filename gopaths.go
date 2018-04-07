@@ -10,6 +10,8 @@ import (
 
 var (
 	GOPATHS_ENV_ORIGINAL_GOPATH = "GOPATHS_GOPATH"
+	GOPATHS_CONFIG_FILE         = "config.toml"
+	GOPATHS_GOPATHS_FILE        = "gopaths.toml"
 	ERR_NOTIMPL                 = errors.New("NotImplemented")
 )
 
@@ -70,22 +72,39 @@ func setInfo(fpath string, rinfo *RepoInfo) error {
 }
 
 func NewApp(c *Config) (*App, error) {
-	inf, err := getInfo(c.SettingPath + "gopaths.toml")
+	if err := checkGopathsConfig(c.SettingPath); err != nil {
+		return nil, errors.Wrap(err, "config dir")
+	}
+	inf, err := getInfo(c.SettingPath + GOPATHS_GOPATHS_FILE)
 	if err != nil {
 		return nil, errors.Wrap(err, "repos info")
 	}
 	return &App{
-		GOPATH: os.Getenv("GOPATH"),
-		Info:   inf,
+		GOPATH:    os.Getenv("GOPATH"),
+		ReposPath: c.SettingPath,
+		Info:      inf,
 	}, nil
 }
 
-func (app *App) checkGopathsConfig() error {
-	if _, err := os.Stat(app.ReposPath); err != nil {
-		if err := os.MkdirAll(app.ReposPath, 0666); err != nil {
+func checkGopathsConfig(fpath string) error {
+	if _, err := os.Stat(fpath); err != nil {
+		if err := os.MkdirAll(fpath, 0777); err != nil {
 			return err
 		}
 	}
+	gopaths_file := fpath + GOPATHS_GOPATHS_FILE
+	if _, err := os.Stat(gopaths_file); err != nil {
+		if _, err := os.Create(gopaths_file); err != nil {
+			return err
+		}
+	}
+	config_file := fpath + GOPATHS_CONFIG_FILE
+	if _, err := os.Stat(config_file); err != nil {
+		if _, err := os.Create(fpath + GOPATHS_CONFIG_FILE); err != nil {
+			return err
+		}
+	}
+
 	return ERR_NOTIMPL
 }
 
