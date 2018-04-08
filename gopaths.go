@@ -164,7 +164,7 @@ func checkGopathsConfig(fpath string) error {
 
 func abs(fpath string) (string, error) {
 	if strings.HasPrefix(fpath, ".") {
-		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		dir, err := os.Getwd()
 		if err != nil {
 			return "", err
 		}
