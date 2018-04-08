@@ -64,6 +64,7 @@ type (
 	AppRemoveConfig struct {
 		Paths   []string
 		Verbose bool
+		All     bool
 	}
 
 	AppEnableConfig struct {
@@ -277,6 +278,10 @@ func isElem(dist string, paths []string) bool {
 func (app *App) Remove(config *AppRemoveConfig) error {
 	var gopathRepos []string
 	var removedPaths []string
+	if config.All {
+		app.Info.Repos = []string{}
+		return setInfo(app.ReposPath+GOPATHS_GOPATHS_FILE, app.Info)
+	}
 	for _, path := range config.Paths {
 		absPath, err := abs(path)
 		if err != nil {
@@ -292,6 +297,10 @@ func (app *App) Remove(config *AppRemoveConfig) error {
 	}
 	app.Info.Repos = gopathRepos
 	return setInfo(app.ReposPath+GOPATHS_GOPATHS_FILE, app.Info)
+}
+
+func (app *App) Restore() error {
+	return ERR_NOTIMPL
 }
 
 // Complete is `gopaths complete`.

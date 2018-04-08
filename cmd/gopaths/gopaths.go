@@ -177,7 +177,16 @@ func ActionRemove(ctx *cli.Context) error {
 	return errors.Wrap(app.Remove(&gopaths.AppRemoveConfig{
 		Paths:   ctx.Args(),
 		Verbose: ctx.Bool("verbose"),
+		All:     ctx.Bool("all"),
 	}), "remove")
+}
+
+func ActionResotre(ctx *cli.Context) error {
+	app, err := newApp(ctx)
+	if err != nil {
+		return errors.Wrap(err, "initalize app")
+	}
+	return errors.Wrap(app.Restore(), "restore")
 }
 
 func ActionComplete(ctx *cli.Context) error {
