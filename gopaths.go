@@ -3,6 +3,7 @@ package gopaths
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -118,8 +119,19 @@ func NewApp(c *Config) (*App, error) {
 	if info.Version == 0 {
 		info.Version = REPOINFO_VERSION_NUMBER
 	}
+	var gopath string = os.Getenv("GOPATH")
+	if gopath == "" {
+		path, err := exec.Command("go", "env", "GOPATH").Output()
+		if err != nil {
+			return nil, errors.Wrap(err, "fail go command")
+		}
+		gopath = string(path)
+		if strings.HasSuffix(gopath, "\n") {
+			gopath = gopath[:len(gopath)-1]
+		}
+	}
 	return &App{
-		GOPATH:    os.Getenv("GOPATH"),
+		GOPATH:    gopath,
 		ReposPath: c.SettingPath,
 		Info:      info,
 	}, nil
