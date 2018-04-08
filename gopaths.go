@@ -2,11 +2,12 @@ package gopaths
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -117,6 +118,29 @@ func checkGopathsConfig(fpath string) error {
 	return nil
 }
 
+func abs(fpath string) (string, error) {
+	if strings.HasPrefix(fpath, ".") {
+		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			return "", err
+		}
+		if fpath == "." {
+			return dir, nil
+		} else {
+		}
+		distDir, err := filepath.Abs(dir + fpath[1:])
+		if err != nil {
+			return "", err
+		}
+		return distDir, nil
+	}
+	dir, err := filepath.Abs(fpath)
+	if err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
 func (app *App) BuildGOPATH() (string, error) {
 	var GOPATH string
 	if len(app.Info.Repos) == 0 {
@@ -178,15 +202,17 @@ func (app *App) Add(config *AppAddConfig) error {
 	if err != nil {
 		return err
 	}
-	var repos []string
+	var repos []string = app.Info.Repos
 	for _, path := range config.Paths {
-		pathAbs, err := filepath.Abs(path)
+		pathAbs, err := abs(path)
 		if err != nil {
 			return err
 		}
-		repos = append(repos, pathAbs)
+		if !isElem(pathAbs, repos) {
+			repos = append(repos, pathAbs)
+		}
 	}
-	rinfo.Repos = append(rinfo.Repos, config.Paths...)
+	rinfo.Repos = repos
 	return setInfo(fileGOPATHS, rinfo)
 }
 
