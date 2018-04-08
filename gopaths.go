@@ -110,14 +110,7 @@ func setInfo(fpath string, rinfo *RepoInfo) error {
 
 func NewApp(c *Config) (*App, error) {
 	if err := checkGopathsConfig(c.SettingPath); err != nil {
-		return nil, errors.Wrap(err, "config dir")
-	}
-	info, err := getInfo(c.SettingPath + GOPATHS_GOPATHS_FILE)
-	if err != nil {
-		return nil, errors.Wrap(err, "repos info")
-	}
-	if info.Version == 0 {
-		info.Version = REPOINFO_VERSION_NUMBER
+		return nil, errors.Wrap(err, "check global config dotfile")
 	}
 	var gopath string = os.Getenv("GOPATH")
 	if gopath == "" {
@@ -129,6 +122,16 @@ func NewApp(c *Config) (*App, error) {
 		if strings.HasSuffix(gopath, "\n") {
 			gopath = gopath[:len(gopath)-1]
 		}
+	}
+	info, err := getInfo(c.SettingPath + GOPATHS_GOPATHS_FILE)
+	if err != nil {
+		return nil, errors.Wrap(err, "repos info")
+	}
+	if info.GOPATH == "" {
+		info.GOPATH = gopath
+	}
+	if info.Version == 0 {
+		info.Version = REPOINFO_VERSION_NUMBER
 	}
 	return &App{
 		GOPATH:    gopath,
@@ -144,9 +147,9 @@ func checkGopathsConfig(fpath string) error {
 
 		}
 	}
-	fileGOPATH := fpath + GOPATHS_GOPATHS_FILE
-	if _, err := os.Stat(fileGOPATH); err != nil {
-		if _, err := os.Create(fileGOPATH); err != nil {
+	fileGOPATHS := fpath + GOPATHS_GOPATHS_FILE
+	if _, err := os.Stat(fileGOPATHS); err != nil {
+		if _, err := os.Create(fileGOPATHS); err != nil {
 			return err
 		}
 	}
@@ -216,6 +219,9 @@ func (app *App) Init() error {
 // Config is `gopaths config`
 // for manage gopaths config.
 func (app *App) Config(config *AppConfigConfig) error {
+	if config.Show {
+		return toml.NewEncoder(os.Stdout).Encode(app.Info)
+	}
 	return ERR_NOTIMPL
 }
 
@@ -224,7 +230,7 @@ func (app *App) Config(config *AppConfigConfig) error {
 func (app *App) Enable() error {
 	gopath, err := app.BuildGOPATH()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "building gopath")
 	}
 	return os.Setenv("GOPATH", gopath)
 }

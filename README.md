@@ -12,13 +12,15 @@ Please see `gopaths help`
 
 Requirements:
 -------------
-- github.com/golang.dep
+- github.com/golang/dep
 - golang 
 
 Install:
 --------
 
+```go
 go get github.com/keizo042/gopaths/cmd/gopaths
+```
 
 License:
 --------
@@ -28,5 +30,5 @@ Author:
 -------
 keizo042  
 twitter: http://twitter.com/keizo042  
-github.com http://github.com/keizo042
-mail: keizo042dev@gmail.com
+github.com http://github.com/keizo042  
+mail: keizo042dev@gmail.com  

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	defaultGoPathsSettings = ".gopaths/gopaths/"
+	defaultGoPathsSettings = ".config/gopaths/"
 )
 
 type (
@@ -134,10 +134,7 @@ func ActionInit(ctx *cli.Context) error {
 func ActionConfig(ctx *cli.Context) error {
 	app, err := newApp(ctx)
 	if err != nil {
-		return err
-	}
-	if ctx.NArg() == 0 {
-		return gopaths.ERR_NOTIMPL
+		return errors.Wrap(err, "initalize app")
 	}
 	return errors.Wrap(app.Config(&gopaths.AppConfigConfig{
 		Args:    ctx.Args(),
