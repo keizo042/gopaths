@@ -33,6 +33,17 @@ var (
 			Name:   "config",
 			Action: ActionConfig,
 			Usage:  "configuration",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "show",
+				},
+				cli.BoolFlag{
+					Name: "verbose",
+				},
+				cli.StringFlag{
+					Name: "set",
+				},
+			},
 		},
 		{
 			Name:   "enable",
@@ -48,11 +59,27 @@ var (
 			Name:   "add",
 			Action: ActionAdd,
 			Usage:  "add repo that be maintained by gopaths",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "verbose",
+				},
+			},
 		},
 		{
 			Name:   "rm",
 			Action: ActionRemove,
 			Usage:  "remove repo that be maintained by gopaths",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "force",
+				},
+				cli.BoolFlag{
+					Name: "all",
+				},
+				cli.BoolFlag{
+					Name: "verbose",
+				},
+			},
 		},
 		{
 			Name:   "complete",
@@ -102,14 +129,21 @@ func ActionInit(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return app.Init()
+	return errors.Wrap(app.Init(), "init")
 }
 func ActionConfig(ctx *cli.Context) error {
 	app, err := newApp(ctx)
 	if err != nil {
 		return err
 	}
-	return app.Config(&gopaths.AppConfigConfig{})
+	if ctx.NArg() == 0 {
+		return gopaths.ERR_NOTIMPL
+	}
+	return errors.Wrap(app.Config(&gopaths.AppConfigConfig{
+		Args:    ctx.Args(),
+		Show:    ctx.Bool("show"),
+		Verbose: ctx.Bool("verbose"),
+	}), "config")
 }
 
 func ActionEnable(ctx *cli.Context) error {
@@ -117,7 +151,7 @@ func ActionEnable(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return app.Enable()
+	return errors.Wrap(app.Enable(), "disable")
 }
 
 func ActionDisable(ctx *cli.Context) error {
@@ -125,7 +159,7 @@ func ActionDisable(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return app.Disable(&gopaths.AppDisableConfig{})
+	return errors.Wrap(app.Disable(&gopaths.AppDisableConfig{}), "disable")
 }
 
 func ActionAdd(ctx *cli.Context) error {
@@ -133,9 +167,9 @@ func ActionAdd(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return app.Add(&gopaths.AppAddConfig{
+	return errors.Wrap(app.Add(&gopaths.AppAddConfig{
 		Paths: ctx.Args(),
-	})
+	}), "add")
 }
 
 func ActionRemove(ctx *cli.Context) error {
@@ -143,7 +177,10 @@ func ActionRemove(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return app.Remove(&gopaths.AppRemoveConfig{})
+	return errors.Wrap(app.Remove(&gopaths.AppRemoveConfig{
+		Paths:   ctx.Args(),
+		Verbose: ctx.Bool("verbose"),
+	}), "remove")
 }
 
 func ActionComplete(ctx *cli.Context) error {
@@ -151,12 +188,12 @@ func ActionComplete(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return app.Complete()
+	return errors.Wrap(app.Complete(), "complete")
 }
 
 func main() {
 	c := NewCli()
 	if err := c.Run(os.Args); err != nil {
-		fmt.Printf("%s: %s\n", gopaths.APP_NAME, err.Error())
+		fmt.Fprintf(os.Stderr, "%s: %s\n", gopaths.APP_NAME, err.Error())
 	}
 }

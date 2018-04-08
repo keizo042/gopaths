@@ -10,11 +10,26 @@ import (
 	"github.com/pkg/errors"
 )
 
+type RepoVersion int16
+
+func (v RepoVersion) String() string {
+	i := int16(v)
+	major := i & 0xd0
+	minor1 := i & 0x30
+	minor2 := i & 0x0d
+	release := i & 0x03
+
+	return fmt.Sprintf("%s:%s:%s", major, minor1, minor2, release)
+}
+
 var (
 	GOPATHS_ENV_ORIGINAL_GOPATH = "GOPATHS_GOPATH"
 	GOPATHS_CONFIG_FILE         = "config.toml"
 	GOPATHS_GOPATHS_FILE        = "gopaths.toml"
-	ERR_NOTIMPL                 = errors.New("NotImplemented")
+
+	REPOINFO_VERSION_NUMBER RepoVersion = 0x00000100
+
+	ERR_NOTIMPL = errors.New("NotImplemented")
 )
 
 type (
@@ -35,6 +50,8 @@ type (
 
 	AppConfigConfig struct {
 		GOPATH  string
+		Args    []string
+		Show    bool
 		Verbose bool
 	}
 
@@ -50,14 +67,16 @@ type (
 
 	AppEnableConfig struct {
 		Verbose bool
+		Args    []string
 	}
 
 	AppDisableConfig struct {
 		Verbose bool
+		Args    []string
 	}
 
 	RepoInfo struct {
-		Version      int32
+		Version      RepoVersion
 		GOPATH       string
 		Repos        []string
 		DisableRepos []string
@@ -73,26 +92,36 @@ func getInfo(fpath string) (*RepoInfo, error) {
 }
 
 func setInfo(fpath string, rinfo *RepoInfo) error {
-	f, err := os.OpenFile(fpath, os.O_WRONLY, 0777)
+	oldFpath := fpath + ".old"
+	if err := os.Rename(fpath, oldFpath); err != nil {
+		return err
+	}
+	f, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	return toml.NewEncoder(f).Encode(rinfo)
+	if err := toml.NewEncoder(f).Encode(rinfo); err != nil {
+		return err
+	}
+	return os.Remove(oldFpath)
 }
 
 func NewApp(c *Config) (*App, error) {
 	if err := checkGopathsConfig(c.SettingPath); err != nil {
 		return nil, errors.Wrap(err, "config dir")
 	}
-	inf, err := getInfo(c.SettingPath + GOPATHS_GOPATHS_FILE)
+	info, err := getInfo(c.SettingPath + GOPATHS_GOPATHS_FILE)
 	if err != nil {
 		return nil, errors.Wrap(err, "repos info")
+	}
+	if info.Version == 0 {
+		info.Version = REPOINFO_VERSION_NUMBER
 	}
 	return &App{
 		GOPATH:    os.Getenv("GOPATH"),
 		ReposPath: c.SettingPath,
-		Info:      inf,
+		Info:      info,
 	}, nil
 }
 
@@ -228,14 +257,23 @@ func isElem(dist string, paths []string) bool {
 // Remove is `gopaths remove`
 // for removing path to gopaths manage.
 func (app *App) Remove(config *AppRemoveConfig) error {
-	var repos []string
-	for _, r := range app.Info.Repos {
-		if !isElem(r, config.Paths) {
-			repos = append(repos, r)
+	var gopathRepos []string
+	var removedPaths []string
+	for _, path := range config.Paths {
+		absPath, err := abs(path)
+		if err != nil {
+			return err
 		}
+		removedPaths = append(removedPaths, absPath)
 	}
-	app.Info.Repos = repos
-	return setInfo(app.ReposPath, app.Info)
+	for _, curRepos := range app.Info.Repos {
+		if isElem(curRepos, removedPaths) {
+			continue
+		}
+		gopathRepos = append(gopathRepos, curRepos)
+	}
+	app.Info.Repos = gopathRepos
+	return setInfo(app.ReposPath+GOPATHS_GOPATHS_FILE, app.Info)
 }
 
 // Complete is `gopaths complete`.
