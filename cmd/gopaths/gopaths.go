@@ -22,8 +22,7 @@ type (
 )
 
 var (
-	globalFlags = []cli.Flag{}
-	commands    = []cli.Command{
+	commands = []cli.Command{
 		{
 			Name:   "init",
 			Action: ActionInit,
