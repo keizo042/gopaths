@@ -27,6 +27,11 @@ var (
 			Name:   "init",
 			Action: ActionInit,
 			Usage:  "manage bash config",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "path",
+				},
+			},
 		},
 		{
 			Name:   "config",
@@ -44,16 +49,18 @@ var (
 				},
 			},
 		},
-		{
-			Name:   "enable",
-			Action: ActionEnable,
-			Usage:  "enable gopaths's GOPATH",
-		},
-		{
-			Name:   "disable",
-			Action: ActionDisable,
-			Usage:  "dsiable gopaths's GOPATH",
-		},
+		/*
+			{
+				Name:   "enable",
+				Action: ActionEnable,
+				Usage:  "enable gopaths's GOPATH",
+			},
+			{
+				Name:   "disable",
+				Action: ActionDisable,
+				Usage:  "dsiable gopaths's GOPATH",
+			},
+		*/
 		{
 			Name:   "add",
 			Action: ActionAdd,
@@ -93,10 +100,8 @@ func NewCli() *Cli {
 	app.Name = gopaths.APP_NAME
 	app.Version = gopaths.APP_VERSION_TEXT
 	app.Commands = commands
-	app.Flags = globalFlags
 	app.Usage = "mutiple gopath manager"
-	return &Cli{
-		App: app}
+	return &Cli{App: app}
 
 }
 
@@ -128,7 +133,11 @@ func ActionInit(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return errors.Wrap(app.Init(), "init")
+	return errors.Wrap(app.Init(&gopaths.AppInitConfig{
+		File:    ctx.String("file"),
+		Path:    ctx.Bool("path"),
+		Verbose: ctx.Bool("verbose"),
+	}), "init")
 }
 func ActionConfig(ctx *cli.Context) error {
 	app, err := newApp(ctx)

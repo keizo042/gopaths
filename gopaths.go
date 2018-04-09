@@ -47,6 +47,7 @@ type (
 	AppInitConfig struct {
 		Verbose bool
 		File    string
+		Path    bool
 	}
 
 	AppConfigConfig struct {
@@ -207,15 +208,16 @@ func (app *App) BuildGOPATH() (string, error) {
 
 // Init is `gopaths init`.
 // for initalizing GOPATH which gopaths maintain.
-func (app *App) Init() error {
+func (app *App) Init(config *AppInitConfig) error {
 	gopath, err := app.BuildGOPATH()
 	if err != nil {
 		return err
 	}
-	if _, err := fmt.Printf("export GOPATH=%s", gopath); err != nil {
+	if config.Path {
+		_, err := fmt.Printf("export GOPATH=%s", gopath)
 		return err
 	}
-	return nil
+	return os.Setenv("GOPATH", gopath)
 }
 
 // Config is `gopaths config`
