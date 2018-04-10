@@ -314,6 +314,7 @@ func (app *App) Remove(config *AppRemoveConfig) error {
 	if err := setInfo(fileGOPATHS, app.Info); err != nil {
 		return err
 	}
+	// TODO: fix some configura
 	gopath, err := app.BuildGOPATH()
 	if err != nil {
 		return err
