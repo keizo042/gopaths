@@ -28,7 +28,7 @@ var (
 	GOPATHS_CONFIG_FILE         = "config.toml"
 	GOPATHS_GOPATHS_FILE        = "gopaths.toml"
 
-	REPOINFO_VERSION_NUMBER RepoVersion = 0x00000100
+	REPOINFO_VERSION_NUMBER RepoVersion = 0x00000100 // 0.0.1.0
 
 	ERR_NOTIMPL = errors.New("NotImplemented")
 )

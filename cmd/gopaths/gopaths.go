@@ -100,6 +100,8 @@ func NewCli() *Cli {
 	app.Name = gopaths.APP_NAME
 	app.Version = gopaths.APP_VERSION_TEXT
 	app.Commands = commands
+	app.Author = "keizo042"
+	app.Email = "keizo042dev@gmail.com"
 	app.Usage = "mutiple gopath manager"
 	return &Cli{App: app}
 
