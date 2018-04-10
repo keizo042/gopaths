@@ -206,6 +206,10 @@ func (app *App) BuildGOPATH() (string, error) {
 	return GOPATH, nil
 }
 
+func (app *App) SetGOPATH(gopath string) error {
+	return os.Setenv("GOPATH", gopath)
+}
+
 // Init is `gopaths init`.
 // for initalizing GOPATH which gopaths maintain.
 func (app *App) Init(config *AppInitConfig) error {
@@ -217,7 +221,7 @@ func (app *App) Init(config *AppInitConfig) error {
 		_, err := fmt.Printf("export GOPATH=%s", gopath)
 		return err
 	}
-	return os.Setenv("GOPATH", gopath)
+	return app.SetGOPATH(gopath)
 }
 
 // Config is `gopaths config`
@@ -236,13 +240,13 @@ func (app *App) Enable() error {
 	if err != nil {
 		return errors.Wrap(err, "building gopath")
 	}
-	return os.Setenv("GOPATH", gopath)
+	return app.SetGOPATH(gopath)
 }
 
 // Disable is `gopaths disable`.
 // for disable gopaths we set and recover original gopath.
 func (app *App) Disable(config *AppDisableConfig) error {
-	return os.Setenv("GOPATH", app.Info.GOPATH)
+	return app.SetGOPATH(app.Info.GOPATH)
 }
 
 // Add is `gopaths add`.
@@ -264,7 +268,14 @@ func (app *App) Add(config *AppAddConfig) error {
 		}
 	}
 	rinfo.Repos = repos
-	return setInfo(fileGOPATHS, rinfo)
+	if err := setInfo(fileGOPATHS, rinfo); err != nil {
+		return err
+	}
+	gopath, err := app.BuildGOPATH()
+	if err != nil {
+		return err
+	}
+	return app.SetGOPATH(gopath)
 }
 
 func isElem(dist string, paths []string) bool {
@@ -281,9 +292,10 @@ func isElem(dist string, paths []string) bool {
 func (app *App) Remove(config *AppRemoveConfig) error {
 	var gopathRepos []string
 	var removedPaths []string
+	fileGOPATHS := app.ReposPath + GOPATHS_GOPATHS_FILE
 	if config.All {
 		app.Info.Repos = []string{}
-		return setInfo(app.ReposPath+GOPATHS_GOPATHS_FILE, app.Info)
+		return setInfo(fileGOPATHS, app.Info)
 	}
 	for _, path := range config.Paths {
 		absPath, err := abs(path)
@@ -299,7 +311,14 @@ func (app *App) Remove(config *AppRemoveConfig) error {
 		gopathRepos = append(gopathRepos, curRepos)
 	}
 	app.Info.Repos = gopathRepos
-	return setInfo(app.ReposPath+GOPATHS_GOPATHS_FILE, app.Info)
+	if err := setInfo(fileGOPATHS, app.Info); err != nil {
+		return err
+	}
+	gopath, err := app.BuildGOPATH()
+	if err != nil {
+		return err
+	}
+	return app.SetGOPATH(gopath)
 }
 
 func (app *App) Restore() error {
