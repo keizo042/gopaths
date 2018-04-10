@@ -15,9 +15,9 @@ type RepoVersion int16
 
 func (v RepoVersion) String() string {
 	i := int16(v)
-	major := i & 0xd0
-	minor1 := i & 0x30
-	minor2 := i & 0x0d
+	major := (i & 0xd0) >> 6
+	minor1 := (i & 0x30) >> 4
+	minor2 := (i & 0x0d) >> 2
 	release := i & 0x03
 
 	return fmt.Sprintf("%s:%s:%s", major, minor1, minor2, release)
