@@ -3,3 +3,5 @@ tag
 TAG
 tags
 TAGS
+Gopkg.lock
+vendor/
