@@ -290,13 +290,14 @@ func isElem(dist string, paths []string) bool {
 // Remove is `gopaths remove`
 // for removing path to gopaths manage.
 func (app *App) Remove(config *AppRemoveConfig) error {
-	var gopathRepos []string
+	var newGopathRepos []string
 	var removedPaths []string
 	fileGOPATHS := app.ReposPath + GOPATHS_GOPATHS_FILE
 	if config.All {
 		app.Info.Repos = []string{}
 		return setInfo(fileGOPATHS, app.Info)
 	}
+
 	for _, path := range config.Paths {
 		absPath, err := abs(path)
 		if err != nil {
@@ -308,9 +309,9 @@ func (app *App) Remove(config *AppRemoveConfig) error {
 		if isElem(curRepos, removedPaths) {
 			continue
 		}
-		gopathRepos = append(gopathRepos, curRepos)
+		newGopathRepos = append(newGopathRepos, curRepos)
 	}
-	app.Info.Repos = gopathRepos
+	app.Info.Repos = newGopathRepos
 	if err := setInfo(fileGOPATHS, app.Info); err != nil {
 		return err
 	}
